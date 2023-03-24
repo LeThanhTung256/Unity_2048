@@ -1,5 +1,5 @@
+using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
@@ -13,7 +13,6 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI bestScoreText;
     public int score;
 
-    private bool isWon = false;
     private bool isGameOver;
     private int bestScore;
 
@@ -36,13 +35,25 @@ public class GameManager : MonoBehaviour
         SetScore(GetLastScore());
         bestScore = GetBestScore();
         bestScoreText.text = bestScore.ToString();
+
+        // Đặt giá trị alpha về 0
+        gameOver.alpha = 0f;
+        gameWon.alpha = 0f;
+
+        // Tránh canvas game over, win game ngăn cản tương tác người dùng
+        gameOver.interactable = false;
+        gameOver.blocksRaycasts = false;
+        gameWon.interactable = false;
+        gameWon.blocksRaycasts = false;
     }    
     
     public void NewGame()
     {
+        PlayerPrefs.Save();
         SetScore(0);
         bestScore = GetBestScore();
         bestScoreText.text = bestScore.ToString();
+        PlayerPrefs.SetInt("isWon", 0);
 
         // Đặt giá trị alpha về 0
         gameOver.alpha = 0f;
@@ -59,7 +70,6 @@ public class GameManager : MonoBehaviour
         board.CreateBlock();
         board.enabled = true;
         this.isGameOver = false;
-        this.isWon = false;
 
         winSound.Stop();
         gameOverSound.Stop();
@@ -68,19 +78,17 @@ public class GameManager : MonoBehaviour
     public void GameWon()
     {
         // Chỉ lần đầu tiên mới thông báo
-        if(!this.isWon)
-        {
-            this.winSound.Play();
+        this.winSound.Play();
 
-            board.enabled = false;
-            StartCoroutine(Fade(gameWon, 1f, 0.5f));
+        board.enabled = false;
+        StartCoroutine(Fade(gameWon, 1f, 0.5f));
 
-            // Ngăn chặn người dùng tương tác
-            gameWon.interactable = true;
-            gameWon.blocksRaycasts = true;
-            this.isWon = true;
-        }
-         
+        // Ngăn chặn người dùng tương tác
+        gameWon.interactable = true;
+        gameWon.blocksRaycasts = true;
+        PlayerPrefs.SetInt("isWon", 1);
+        PlayerPrefs.Save();
+
     }
 
     public void GameOver()

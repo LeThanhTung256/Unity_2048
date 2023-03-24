@@ -33,7 +33,8 @@ public class GameState : MonoBehaviour
         int highScore = PlayerPrefs.GetInt("best", 0);
 
         PlayerPrefs.DeleteAll();
-
+        PlayerPrefs.SetInt("isWon", 0);
         PlayerPrefs.SetInt("best", highScore);
+        PlayerPrefs.Save();
     }
 }

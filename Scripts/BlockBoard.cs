@@ -147,7 +147,11 @@ public class BlockBoard : MonoBehaviour
                     // Nếu có ô đạt được 2048 thì thông báo won game
                     if (number >= 2048)
                     {
-                        gameManager.GameWon();
+                        bool isWon = Convert.ToBoolean(PlayerPrefs.GetInt("isWon", 0));
+                        if(!isWon)
+                        {
+                            gameManager.GameWon();
+                        }
                     }
                     
                     adjacentCell.block.SetState(states[indexState], number);
