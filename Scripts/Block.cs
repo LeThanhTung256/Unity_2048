@@ -18,6 +18,8 @@ public class Block : MonoBehaviour
     // Liệu block có thể merge
     public bool mergeState { get; private set; }
 
+    public BlockState defaultState;
+
     // Các component của Block
     private Image background;
     private TextMeshProUGUI text;
@@ -26,12 +28,6 @@ public class Block : MonoBehaviour
     {
         background = GetComponent<Image>();
         text = GetComponentInChildren<TextMeshProUGUI>();
-    }
-
-    private void OnDestroy()
-    {
-        this.cell = null;
-        Destroy(gameObject);
     }
 
     // Thiết lập thuộc tính cho block
@@ -43,6 +39,23 @@ public class Block : MonoBehaviour
         background.color = state.backgroundColor;
         text.color = state.textColor;
         text.text = number.ToString();
+    }
+
+    public void Reset()
+    {
+        cell.block = null;
+        cell = null;
+        SetState(defaultState, 2);
+        this.gameObject.SetActive(false);
+    }
+
+    // Tái sử dụng block
+    public void Reuse(BlockCell cell)
+    {
+        this.cell = cell;
+        this.cell.block = this;
+        this.gameObject.SetActive(true);
+        transform.position = cell.transform.position;
     }
 
     // Set merge state cho block
@@ -88,7 +101,7 @@ public class Block : MonoBehaviour
         }
 
         StartCoroutine(Animate(block.transform.position));
-        Destroy(gameObject);
+        Reset();
     }
 
     // Tạo animate di chuyển

@@ -16,7 +16,8 @@ public class BlockBoard : MonoBehaviour
 
     // Danh sách các block đang có
     public List<Block> blocks;
-
+    public List<Block> reuseBlocks;
+    
     // isWaiting dùng để ngăn chặn người dùng nhập vào input trước khi animate kết thúc
     private bool isWaiting;
 
@@ -26,6 +27,7 @@ public class BlockBoard : MonoBehaviour
         mergeSound = GetComponent<AudioSource>();
         inputManager = GetComponent<InputManager>();
         blocks = new List<Block>(16);
+        reuseBlocks = new List<Block>(16);
     } 
 
     private void Update()
@@ -60,14 +62,10 @@ public class BlockBoard : MonoBehaviour
     // Xoá hết các block có trên bảng
     public void ClearBoard()
     {
-        foreach(BlockCell cell in grid.cells)
-        {
-            cell.block = null;
-        }
-
         foreach(Block block in blocks)
         {
-            Destroy(block.gameObject);
+            block.Reset();
+            reuseBlocks.Add(block);
         }
 
         blocks.Clear();
@@ -76,15 +74,27 @@ public class BlockBoard : MonoBehaviour
     // Tạo một block mới tại vị trí cell trống
     public void CreateBlock()
     {
-        Block newBlock = Instantiate(blockPrefab, grid.transform);
         BlockCell emptyCell = grid.GetRandomEmptyCell();
-        if (emptyCell != null)
-        {
-            newBlock.SetState(states[0], 2);
-            newBlock.Spawn(emptyCell);
-        }
 
-        blocks.Add(newBlock);
+        // Nếu có block có thể tái sử dụng thì dùng, nếu không thì tạo mới
+        if (reuseBlocks.Count != 0)
+        {
+            Block reuseBlock = reuseBlocks[0];
+            reuseBlock.Reuse(emptyCell);
+            blocks.Add(reuseBlock);
+            reuseBlocks.Remove(reuseBlock);
+        }
+        else 
+        {
+            Block newBlock = Instantiate(blockPrefab, grid.transform);
+            if (emptyCell != null)
+            {
+                newBlock.SetState(states[0], 2);
+                newBlock.Spawn(emptyCell);
+            }
+            blocks.Add(newBlock);       
+        }
+ 
     }
 
     // Di chuyển tất cả block theo hướng direction
@@ -138,11 +148,13 @@ public class BlockBoard : MonoBehaviour
                     // Merge block into adjacent block
                     block.MergeInto(adjacentCell.block);
 
+                    reuseBlocks.Add(block);
+
                     // Tăng indexState lên 1, nếu nó vượt quá states.length thì lấy sates.length
-                    int indexState = Mathf.Clamp(IndexOfState(block.state) + 1, 0, states.Length - 1);
+                    int indexState = Mathf.Clamp(IndexOfState(adjacentCell.block.state) + 1, 0, states.Length - 1);
 
                     // Nếu state thay đổi thì number nhân 2, nếu không thì không thay đổi
-                    int number = (indexState == IndexOfState(block.state)) ? block.number : block.number * 2;
+                    int number = (indexState == IndexOfState(adjacentCell.block.state)) ? adjacentCell.block.number : adjacentCell.block.number * 2;
 
                     // Nếu có ô đạt được 2048 thì thông báo won game
                     if (number >= 2048)
